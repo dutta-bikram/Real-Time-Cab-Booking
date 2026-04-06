@@ -1,53 +1,70 @@
 body {
-  font-family: Arial, sans-serif;
-  background: #f4f6f8;
-  margin: 0;
-  padding: 0;
+  margin:0;
+  font-family: 'Segoe UI';
+  background: linear-gradient(120deg,#eef2ff,#f0fdfa);
 }
 
-.container {
-  width: 350px;
-  margin: 40px auto;
+.center {
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
 }
 
-h1 {
-  text-align: center;
-  color: #333;
+.login-card {
+  background:white;
+  padding:30px;
+  border-radius:14px;
+  width:280px;
+  text-align:center;
+  box-shadow:0 10px 30px rgba(0,0,0,0.1);
 }
 
-.card {
-  background: white;
-  padding: 20px;
-  margin-bottom: 20px;
-  border-radius: 10px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+.login-card h1 {
+  color:#4f46e5;
 }
 
 input {
-  width: 100%;
-  padding: 10px;
-  margin-top: 10px;
-  margin-bottom: 10px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
+  width:100%;
+  padding:10px;
+  margin-top:10px;
+  border-radius:6px;
+  border:1px solid #ccc;
 }
 
 button {
-  width: 100%;
-  padding: 10px;
-  background: #111;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: 0.2s;
+  width:100%;
+  padding:10px;
+  margin-top:10px;
+  border:none;
+  border-radius:6px;
+  background:linear-gradient(45deg,#4f46e5,#06b6d4);
+  color:white;
+  cursor:pointer;
 }
 
-button:hover {
-  background: #333;
+.sidebar {
+  width:200px;
+  height:100vh;
+  background:#111827;
+  color:white;
+  position:fixed;
+  padding:20px;
 }
 
-p {
-  margin: 8px 0;
-  font-weight: bold;
+.main {
+  margin-left:220px;
+  padding:20px;
+}
+
+.card {
+  background:white;
+  padding:20px;
+  border-radius:12px;
+  max-width:400px;
+  box-shadow:0 8px 20px rgba(0,0,0,0.1);
+}
+
+.hidden {
+  display:none;
 }

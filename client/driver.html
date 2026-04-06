@@ -1,56 +1,77 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Driver Panel</title>
+<title>Driver</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<h2>Driver Panel</h2>
+<div class="main">
+<div class="card">
 
-<button onclick="checkRide()">Check Ride</button>
-<button onclick="acceptRide()">Accept</button>
-<button onclick="completeRide()">Complete</button>
+<h3>Driver Panel</h3>
 
-<h3 id="driverStatus"></h3>
+<p id="status">Idle</p>
+
+<button onclick="accept()">Accept Ride</button>
+
+<input id="otpInput" placeholder="Enter OTP">
+<button onclick="verify()">Verify OTP</button>
+
+<button onclick="complete()">Complete Ride</button>
+
+<p id="pay"></p>
+
+</div>
+</div>
 
 <script>
-const SERVER = "http://localhost:5000";
+const SERVER="http://localhost:5000";
+let last="";
 
-async function checkRide() {
-    const res = await fetch(`${SERVER}/driver/status`);
-    const data = await res.json();
+setInterval(async()=>{
+ const res=await fetch(`${SERVER}/driver/status`);
+ const d=await res.json();
 
-    document.getElementById("driverStatus").innerText =
-        "Status: " + data.status + " | Price: ₹" + data.price;
+ document.getElementById("status").innerText=d.status;
+
+ if(d.status==="requested" && last!=="requested"){
+   alert("🚨 New Ride Request!");
+ }
+
+ if(d.paid){
+   document.getElementById("pay").innerText="💰 Payment Received";
+ }
+
+ last=d.status;
+
+},2000);
+
+async function accept(){
+ await fetch(`${SERVER}/driver/accept`,{method:"POST"});
+ alert("Accepted");
 }
 
-async function acceptRide() {
-    await fetch(`${SERVER}/driver/accept`, {method: "POST"});
-    alert("Ride accepted");
+async function verify(){
+ const otp=document.getElementById("otpInput").value;
+
+ const res=await fetch(`${SERVER}/verify-ride-otp`,{
+  method:"POST",
+  headers:{"Content-Type":"application/json"},
+  body:JSON.stringify({otp})
+ });
+
+ const d=await res.json();
+
+ if(d.status==="success") alert("Ride Started");
+ else alert("Wrong OTP");
 }
 
-async function completeRide() {
-    await fetch(`${SERVER}/complete`, {method: "POST"});
-    alert("Ride completed");
+async function complete(){
+ await fetch(`${SERVER}/complete`,{method:"POST"});
+ alert("Ride Completed");
 }
 </script>
-<style>
-body {
-  font-family: Arial;
-  padding: 20px;
-  background: #f4f6f8;
-}
-
-button {
-  padding: 10px;
-  margin: 5px;
-  border: none;
-  background: black;
-  color: white;
-  border-radius: 6px;
-  cursor: pointer;
-}
-</style>
 
 </body>
 </html>

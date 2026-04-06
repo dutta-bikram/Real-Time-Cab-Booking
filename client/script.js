@@ -1,81 +1,53 @@
 const SERVER = "http://localhost:5000";
 
-async function sendOTP() {
-    const phone = document.getElementById("phone").value;
-
-    await fetch(`${SERVER}/send-otp`, {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({phone})
-    });
-
-    alert("OTP sent (check server terminal)");
-}
-
-async function verifyOTP() {
-    const phone = document.getElementById("phone").value;
-    const otp = document.getElementById("otp").value;
-
-    const res = await fetch(`${SERVER}/verify-otp`, {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({phone, otp})
-    });
-
-    const data = await res.json();
-    document.getElementById("status").innerText = "Status: " + data.status;
-}
-
 async function bookRide() {
-    const res = await fetch(`${SERVER}/book`, {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({user: "Bikram"})
-    });
-
+    const res = await fetch(`${SERVER}/book`, {method:"POST"});
     const data = await res.json();
 
-    document.getElementById("price").innerText =
-        "💰 Price: ₹" + data.price;
+    document.getElementById("price").innerText = "Price: ₹" + data.price;
+    document.getElementById("status").innerText = "Waiting for driver...";
 
-    document.getElementById("status").innerText =
-        "⏳ Waiting for driver...";
-
-    startTrackingDriver();
+    trackDriver();
 }
 
-// 🔥 NEW: Track driver status
-function startTrackingDriver() {
-    const interval = setInterval(async () => {
+function trackDriver(){
+    const interval = setInterval(async ()=>{
         const res = await fetch(`${SERVER}/driver/status`);
         const data = await res.json();
 
-        if (data.status === "accepted") {
-            document.getElementById("driver").innerText =
-                "🚗 Driver Assigned: " + data.driver;
-
-            document.getElementById("status").innerText =
-                "Driver is on the way!";
+        // ✅ OTP FIX: now always updates
+        if(data.status === "accepted" && data.ride_otp){
+            document.getElementById("driver").innerText = "🚗 Driver Assigned";
+            document.getElementById("otp").innerText = "🔐 OTP: " + data.ride_otp;
+            document.getElementById("status").innerText = "Driver arriving...";
         }
 
-        if (data.status === "completed") {
-            document.getElementById("status").innerText =
-                "✅ Ride Completed";
+        if(data.status === "ongoing"){
+            document.getElementById("status").innerText = "Ride Started";
+        }
 
+        if(data.status === "completed"){
+            document.getElementById("status").innerText = "Ride Completed";
             clearInterval(interval);
         }
 
-    }, 2000); // every 2 sec
+    },2000);
 }
 
-async function rateRide() {
-    const rating = document.getElementById("rating").value;
+async function payNow(){
+    const amount = document.getElementById("amount").value;
 
-    await fetch(`${SERVER}/rate`, {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({rating})
+    const res = await fetch(`${SERVER}/pay`,{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({amount})
     });
 
-    alert("Thanks for rating!");
+    const data = await res.json();
+
+    if(data.status==="success"){
+        alert("✅ Payment Successful");
+    } else {
+        alert("❌ Enter exact amount");
+    }
 }

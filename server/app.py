@@ -5,68 +5,52 @@ import random
 app = Flask(__name__)
 CORS(app)
 
-# In-memory storage
-otp_store = {}
 ride = {
     "status": "idle",
-    "user": None,
     "driver": "Driver1",
     "price": 0,
-    "rating": None
+    "ride_otp": None,
+    "paid": False
 }
 
-# Generate OTP
-@app.route('/send-otp', methods=['POST'])
-def send_otp():
-    phone = request.json['phone']
-    otp = str(random.randint(1000, 9999))
-    otp_store[phone] = otp
-    print("OTP:", otp)  # show in terminal
-    return jsonify({"message": "OTP sent"})
-
-# Verify OTP
-@app.route('/verify-otp', methods=['POST'])
-def verify_otp():
-    phone = request.json['phone']
-    otp = request.json['otp']
-    
-    if otp_store.get(phone) == otp:
-        return jsonify({"status": "verified"})
-    return jsonify({"status": "failed"})
-
-# Book Ride
 @app.route('/book', methods=['POST'])
 def book():
     ride["status"] = "requested"
-    ride["user"] = request.json['user']
     ride["price"] = random.randint(100, 300)
-    
-    return jsonify({
-        "message": "Ride booked",
-        "price": ride["price"]
-    })
+    ride["ride_otp"] = None   # reset OTP
+    ride["paid"] = False
+    return jsonify({"price": ride["price"]})
 
-# Driver checks ride
 @app.route('/driver/status')
-def driver_status():
+def status():
     return jsonify(ride)
 
-# Driver accepts
 @app.route('/driver/accept', methods=['POST'])
 def accept():
     ride["status"] = "accepted"
-    return jsonify({"message": "Ride accepted"})
+    ride["ride_otp"] = str(random.randint(1000, 9999))
+    return jsonify({"otp": ride["ride_otp"]})
 
-# Complete ride
+@app.route('/verify-ride-otp', methods=['POST'])
+def verify():
+    if request.json['otp'] == ride["ride_otp"]:
+        ride["status"] = "ongoing"
+        return jsonify({"status": "success"})
+    return jsonify({"status": "failed"})
+
 @app.route('/complete', methods=['POST'])
 def complete():
     ride["status"] = "completed"
-    return jsonify({"message": "Ride completed"})
+    return jsonify({"msg": "done"})
 
-# Rating
-@app.route('/rate', methods=['POST'])
-def rate():
-    ride["rating"] = request.json['rating']
-    return jsonify({"message": "Thanks for rating!"})
+@app.route('/pay', methods=['POST'])
+def pay():
+    amount = int(request.json['amount'])
+
+    if amount != ride["price"]:
+        return jsonify({"status": "failed", "msg": "Wrong amount"})
+
+    ride["paid"] = True
+    return jsonify({"status": "success"})
 
 app.run(host="0.0.0.0", port=5000, debug=True)
