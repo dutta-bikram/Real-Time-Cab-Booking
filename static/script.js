@@ -1,4 +1,5 @@
 const socket = io();
+// const socket = io(window.location.origin);
 
 // CLIENT EVENTS
 

@@ -36,9 +36,16 @@
     <div id="paymentSection" style="display:none;">
         <h2>Payment</h2>
         <p id="fareText"></p>
+
         <input id="amount" placeholder="Enter amount">
         <button onclick="pay()">Pay</button>
+
         <p id="msg"></p>
+
+        <!-- NEW BUTTON -->
+        <button id="newRideBtn" onclick="resetApp()" style="display:none;">
+            Book Another Ride 🚕
+        </button>
     </div>
 
 </div>
@@ -48,6 +55,7 @@
 <script>
 var socket = io("http://127.0.0.1:5000");
 
+/* 🚕 BOOK RIDE */
 function bookRide(){
     let source = document.getElementById("source").value;
     let dest = document.getElementById("dest").value;
@@ -57,7 +65,7 @@ function bookRide(){
     document.getElementById("status").innerText = "Searching for driver...";
 }
 
-/* 🔥 DRIVER ACCEPTED */
+/* ✅ DRIVER ACCEPTED */
 socket.on("ride_accepted", data => {
     document.getElementById("bookSection").style.display = "none";
     document.getElementById("otpSection").style.display = "block";
@@ -65,7 +73,7 @@ socket.on("ride_accepted", data => {
     document.getElementById("otp").innerText = data.otp;
 });
 
-/* 🔥 OTP VERIFIED → START RIDE */
+/* 🔐 OTP VERIFIED */
 socket.on("otp_success", () => {
     document.getElementById("otpSection").style.display = "none";
     document.getElementById("rideSection").style.display = "block";
@@ -73,7 +81,7 @@ socket.on("otp_success", () => {
     document.getElementById("rideStatus").innerText = "Ride Started 🚕";
 });
 
-/* 🔥 RIDE COMPLETED → PAYMENT */
+/* 🏁 RIDE COMPLETED */
 socket.on("ride_completed", data => {
     document.getElementById("rideSection").style.display = "none";
     document.getElementById("paymentSection").style.display = "block";
@@ -81,19 +89,41 @@ socket.on("ride_completed", data => {
     document.getElementById("fareText").innerText = "Fare: ₹" + data.fare;
 });
 
-/* 🔥 PAYMENT */
+/* 💳 PAYMENT */
 function pay(){
     let amount = document.getElementById("amount").value;
     socket.emit("make_payment", {amount});
 }
 
+/* ✅ PAYMENT SUCCESS */
 socket.on("payment_success", () => {
     document.getElementById("msg").innerText = "Payment Successful!";
+    document.getElementById("newRideBtn").style.display = "block";
 });
 
+/* ❌ PAYMENT FAILED */
 socket.on("payment_failed", () => {
     document.getElementById("msg").innerText = "Wrong amount!";
 });
+
+/* 🔁 RESET APP */
+function resetApp() {
+    // Show booking again
+    document.getElementById("paymentSection").style.display = "none";
+    document.getElementById("bookSection").style.display = "block";
+
+    // Reset inputs
+    document.getElementById("source").value = "";
+    document.getElementById("dest").value = "";
+    document.getElementById("amount").value = "";
+
+    // Reset texts
+    document.getElementById("status").innerText = "";
+    document.getElementById("msg").innerText = "";
+
+    // Hide button again
+    document.getElementById("newRideBtn").style.display = "none";
+}
 </script>
 
 </body>
