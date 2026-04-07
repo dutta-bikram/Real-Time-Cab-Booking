@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TAXWE — Book Your Ride</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #060810;
+  --surface: #0d1117;
+  --card: #111827;
+  --accent: #3b82f6;
+  --accent-glow: rgba(59,130,246,0.2);
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --text: #f1f5f9;
+  --muted: #64748b;
+  --border: rgba(255,255,255,0.07);
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+
+/* BACKGROUND */
+.bg-mesh {
+  position: fixed; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse 800px 600px at 20% 50%, rgba(59,130,246,0.06), transparent),
+    radial-gradient(ellipse 600px 400px at 80% 20%, rgba(99,102,241,0.05), transparent),
+    radial-gradient(ellipse 500px 500px at 70% 80%, rgba(16,185,129,0.03), transparent);
+}
+
+/* GRID LINES */
+.bg-grid {
+  position: fixed; inset: 0; z-index: 0;
+  background-image:
+    linear-gradient(rgba(59,130,246,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(59,130,246,0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+}
+
+/* HEADER BAR */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 32px;
+  background: rgba(6,8,16,0.8);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+}
+.logo {
+  font-family: 'Syne', sans-serif;
+  font-size: 22px; font-weight: 800;
+  letter-spacing: -1px;
+}
+.logo span { color: var(--accent); }
+
+.topbar-status {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; color: var(--muted);
+}
+.status-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--success);
+  animation: blink 1.5s ease-in-out infinite;
+  box-shadow: 0 0 6px var(--success);
+}
+@keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+.topbar-back {
+  font-size: 13px; color: var(--muted);
+  text-decoration: none;
+  display: flex; align-items: center; gap: 6px;
+  transition: color 0.2s;
+}
+.topbar-back:hover { color: var(--text); }
+
+/* MAIN CARD */
+.card {
+  position: relative; z-index: 10;
+  width: 420px;
+  background: rgba(13,17,23,0.95);
+  border: 1px solid var(--border);
+  border-radius: 28px;
+  overflow: hidden;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.03),
+    0 40px 80px rgba(0,0,0,0.6),
+    0 0 60px rgba(59,130,246,0.05);
+}
+
+/* CARD TOP STRIPE */
+.card-stripe {
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), #6366f1, var(--accent));
+  background-size: 200% 100%;
+  animation: stripeMove 3s linear infinite;
+}
+@keyframes stripeMove {
+  0% { background-position: 0% 0%; }
+  100% { background-position: 200% 0%; }
+}
+
+.card-body { padding: 36px 36px 40px; }
+
+/* STEP INDICATOR */
+.steps-indicator {
+  display: flex; align-items: center; gap: 0;
+  margin-bottom: 36px;
+}
+.step-dot {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 600;
+  color: var(--muted);
+  transition: all 0.3s;
+  flex-shrink: 0;
+}
+.step-dot.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+  box-shadow: 0 0 16px var(--accent-glow);
+}
+.step-dot.done {
+  background: rgba(34,197,94,0.15);
+  border-color: rgba(34,197,94,0.3);
+  color: var(--success);
+}
+.step-line {
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+  position: relative;
+}
+.step-line-fill {
+  position: absolute;
+  height: 100%; left: 0; top: 0;
+  background: var(--accent);
+  width: 0%;
+  transition: width 0.6s ease;
+}
+
+/* SECTION */
+.section { display: none; animation: sectionIn 0.4s ease; }
+.section.active { display: block; }
+@keyframes sectionIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* SECTION HEADER */
+.section-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  display: block;
+  filter: drop-shadow(0 0 20px rgba(59,130,246,0.3));
+}
+.section-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 26px; font-weight: 800;
+  letter-spacing: -0.8px;
+  margin-bottom: 8px;
+}
+.section-subtitle {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.6;
+  font-weight: 300;
+  margin-bottom: 28px;
+}
+
+/* INPUT GROUP */
+.input-group { position: relative; margin-bottom: 14px; }
+.input-label {
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+  display: block;
+}
+.input-wrapper {
+  position: relative;
+  display: flex; align-items: center;
+}
+.input-icon {
+  position: absolute; left: 16px;
+  font-size: 16px;
+  pointer-events: none;
+}
+input[type="text"], input[type="number"] {
+  width: 100%;
+  padding: 14px 16px 14px 46px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  outline: none;
+  transition: all 0.3s;
+}
+input::placeholder { color: var(--muted); }
+input:focus {
+  background: rgba(255,255,255,0.07);
+  border-color: rgba(59,130,246,0.4);
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.08);
+}
+
+/* ROUTE LINE DECORATION */
+.route-connector {
+  display: flex; align-items: center; gap: 14px;
+  margin: 4px 0;
+}
+.route-line-v {
+  width: 1px; height: 20px;
+  background: linear-gradient(to bottom, rgba(59,130,246,0.4), rgba(59,130,246,0.1));
+  margin-left: 24px;
+}
+
+/* BUTTON */
+.btn {
+  width: 100%;
+  padding: 15px;
+  border-radius: 12px;
+  border: none;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px; font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  margin-top: 20px;
+}
+.btn-primary {
+  background: var(--accent);
+  color: white;
+  box-shadow: 0 0 0 rgba(59,130,246,0);
+}
+.btn-primary:hover {
+  background: #60a5fa;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(59,130,246,0.35);
+}
+.btn-secondary {
+  background: rgba(255,255,255,0.05);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover {
+  background: rgba(255,255,255,0.08);
+  transform: translateY(-2px);
+}
+.btn-success {
+  background: var(--success);
+  color: white;
+}
+.btn-success:hover {
+  background: #4ade80;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(34,197,94,0.3);
+}
+
+/* STATUS MESSAGE */
+.status-msg {
+  margin-top: 16px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  display: none;
+  align-items: center; gap: 10px;
+}
+.status-msg.visible { display: flex; }
+.status-msg.info {
+  background: rgba(59,130,246,0.1);
+  border: 1px solid rgba(59,130,246,0.2);
+  color: #60a5fa;
+}
+.status-msg.success {
+  background: rgba(34,197,94,0.1);
+  border: 1px solid rgba(34,197,94,0.2);
+  color: var(--success);
+}
+.status-msg.error {
+  background: rgba(239,68,68,0.1);
+  border: 1px solid rgba(239,68,68,0.2);
+  color: #f87171;
+}
+
+/* OTP DISPLAY */
+.otp-box {
+  background: rgba(34,197,94,0.06);
+  border: 1px solid rgba(34,197,94,0.15);
+  border-radius: 16px;
+  padding: 28px;
+  text-align: center;
+  margin: 20px 0;
+}
+.otp-label {
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+.otp-number {
+  font-family: 'Syne', sans-serif;
+  font-size: 64px; font-weight: 800;
+  letter-spacing: 8px;
+  color: var(--success);
+  line-height: 1;
+  text-shadow: 0 0 40px rgba(34,197,94,0.4);
+  animation: otpPulse 2s ease-in-out infinite;
+}
+@keyframes otpPulse {
+  0%,100% { text-shadow: 0 0 20px rgba(34,197,94,0.4); }
+  50% { text-shadow: 0 0 60px rgba(34,197,94,0.8); }
+}
+.otp-instruction {
+  font-size: 13px; color: var(--muted);
+  margin-top: 12px; font-weight: 300;
+}
+
+/* FARE DISPLAY */
+.fare-box {
+  background: rgba(245,158,11,0.06);
+  border: 1px solid rgba(245,158,11,0.15);
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+  margin: 20px 0;
+}
+.fare-label {
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.fare-amount {
+  font-family: 'Syne', sans-serif;
+  font-size: 56px; font-weight: 800;
+  color: var(--warning);
+  line-height: 1;
+}
+
+/* RIDE STATUS BAR */
+.ride-status-bar {
+  background: rgba(59,130,246,0.06);
+  border: 1px solid rgba(59,130,246,0.15);
+  border-radius: 14px;
+  padding: 20px 24px;
+  margin: 20px 0;
+  display: flex; align-items: center; gap: 16px;
+}
+.ride-status-icon { font-size: 32px; }
+.ride-status-text { font-size: 15px; font-weight: 600; }
+.ride-status-sub { font-size: 13px; color: var(--muted); margin-top: 2px; font-weight: 300; }
+
+/* PULSE LOADER */
+.loader {
+  display: flex; gap: 6px; align-items: center; justify-content: center;
+  margin-top: 20px;
+}
+.loader span {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: loaderBounce 1.2s ease-in-out infinite;
+}
+.loader span:nth-child(2) { animation-delay: 0.2s; }
+.loader span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes loaderBounce {
+  0%,100% { transform: translateY(0); opacity: 0.5; }
+  50% { transform: translateY(-8px); opacity: 1; }
+}
+
+/* PARTICLE */
+.particles { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+.particle {
+  position: absolute;
+  width: 2px; height: 2px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0;
+  animation: particleFly linear infinite;
+}
+@keyframes particleFly {
+  0% { transform: translateY(100vh) translateX(0); opacity: 0; }
+  10% { opacity: 0.5; }
+  90% { opacity: 0.2; }
+  100% { transform: translateY(-100px) translateX(40px); opacity: 0; }
+}
+</style>
+</head>
+<body>
+
+<div class="bg-mesh"></div>
+<div class="bg-grid"></div>
+<div class="particles" id="particles"></div>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo">TAX<span>WE</span></div>
+  <div class="topbar-status">
+    <div class="status-dot"></div>
+    Connected
+  </div>
+  <a href="/" class="topbar-back">← Home</a>
+</div>
+
+<!-- MAIN CARD -->
+<div class="card">
+  <div class="card-stripe"></div>
+  <div class="card-body">
+
+    <!-- STEP INDICATOR -->
+    <div class="steps-indicator" id="stepsIndicator">
+      <div class="step-dot active" id="sd1">1</div>
+      <div class="step-line"><div class="step-line-fill" id="sl1"></div></div>
+      <div class="step-dot" id="sd2">2</div>
+      <div class="step-line"><div class="step-line-fill" id="sl2"></div></div>
+      <div class="step-dot" id="sd3">3</div>
+      <div class="step-line"><div class="step-line-fill" id="sl3"></div></div>
+      <div class="step-dot" id="sd4">4</div>
+    </div>
+
+    <!-- STEP 1: BOOK -->
+    <div class="section active" id="bookSection">
+      <span class="section-icon">🗺️</span>
+      <div class="section-title">Where to?</div>
+      <p class="section-subtitle">Enter your pickup and drop-off to find the nearest driver.</p>
+
+      <div class="input-group">
+        <label class="input-label">Pickup Location</label>
+        <div class="input-wrapper">
+          <span class="input-icon">📍</span>
+          <input type="text" id="source" placeholder="Enter your pickup point">
+        </div>
+      </div>
+
+      <div class="route-connector">
+        <div class="route-line-v"></div>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Drop-off Location</label>
+        <div class="input-wrapper">
+          <span class="input-icon">🏁</span>
+          <input type="text" id="dest" placeholder="Enter your destination">
+        </div>
+      </div>
+
+      <button class="btn btn-primary" onclick="bookRide()">
+        🚕 Find a Driver
+      </button>
+
+      <div class="status-msg info" id="searchStatus">
+        <span>🔍</span> Searching for nearby drivers...
+        <div class="loader" style="margin:0; margin-left: auto;">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2: OTP -->
+    <div class="section" id="otpSection">
+      <span class="section-icon">🎫</span>
+      <div class="section-title">Driver Found!</div>
+      <p class="section-subtitle">Your OTP is ready. Show this to the driver when they arrive.</p>
+
+      <div class="otp-box">
+        <div class="otp-label">Your OTP Code</div>
+        <div class="otp-number" id="otp">----</div>
+        <div class="otp-instruction">Valid for this ride only · Do not share with anyone else</div>
+      </div>
+
+      <div class="status-msg info visible">
+        <span>🚘</span> Driver is on the way to your pickup
+      </div>
+    </div>
+
+    <!-- STEP 3: RIDE ONGOING -->
+    <div class="section" id="rideSection">
+      <span class="section-icon">🚕</span>
+      <div class="section-title">Ride Started!</div>
+      <p class="section-subtitle">Sit back and relax. Your driver has verified your OTP.</p>
+
+      <div class="ride-status-bar">
+        <div class="ride-status-icon">🛣️</div>
+        <div>
+          <div class="ride-status-text">En Route to Destination</div>
+          <div class="ride-status-sub" id="routeDisplay">—</div>
+        </div>
+      </div>
+
+      <div class="loader" style="margin-top: 32px;">
+        <span></span><span></span><span></span>
+      </div>
+      <p style="text-align:center; color: var(--muted); font-size: 13px; margin-top: 12px;">Waiting for ride completion...</p>
+    </div>
+
+    <!-- STEP 4: PAYMENT -->
+    <div class="section" id="paymentSection">
+      <span class="section-icon">💳</span>
+      <div class="section-title">Pay the Fare</div>
+      <p class="section-subtitle">Enter the exact fare amount to complete your ride.</p>
+
+      <div class="fare-box">
+        <div class="fare-label">Total Fare</div>
+        <div class="fare-amount" id="fareAmount">₹0</div>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Enter Amount (₹)</label>
+        <div class="input-wrapper">
+          <span class="input-icon">₹</span>
+          <input type="number" id="amount" placeholder="Enter exact fare amount">
+        </div>
+      </div>
+
+      <button class="btn btn-primary" onclick="pay()">
+        💳 Confirm Payment
+      </button>
+
+      <div class="status-msg success" id="paySuccess">
+        <span>✅</span> Payment Successful! Thank you for riding with TAXWE.
+      </div>
+      <div class="status-msg error" id="payError">
+        <span>❌</span> Wrong amount. Please enter the exact fare.
+      </div>
+
+      <button class="btn btn-secondary" id="newRideBtn" onclick="resetApp()" style="display:none; margin-top: 12px;">
+        🚕 Book Another Ride
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+<script>
+var socket = io(window.location.origin);
+var currentSource = '', currentDest = '';
+
+// ── STEP INDICATOR ────────────────────────────────────────────
+function setStep(n) {
+  for (let i = 1; i <= 4; i++) {
+    const dot = document.getElementById('sd' + i);
+    dot.className = 'step-dot' + (i < n ? ' done' : i === n ? ' active' : '');
+    dot.textContent = i < n ? '✓' : i;
+  }
+  for (let i = 1; i <= 3; i++) {
+    document.getElementById('sl' + i).style.width = i < n ? '100%' : '0%';
+  }
+}
+
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ── BOOK RIDE ─────────────────────────────────────────────────
+function bookRide() {
+  currentSource = document.getElementById('source').value.trim();
+  currentDest = document.getElementById('dest').value.trim();
+  if (!currentSource || !currentDest) {
+    document.getElementById('source').focus();
+    return;
+  }
+  socket.emit('book_ride', { source: currentSource, dest: currentDest });
+  document.getElementById('searchStatus').classList.add('visible');
+}
+
+// Server confirms ride is in the queue (new event from updated backend)
+socket.on('ride_requested', () => {
+  // Already showing searchStatus — just keep waiting for a driver
+});
+
+// ── DRIVER ACCEPTED ───────────────────────────────────────────
+socket.on('ride_accepted', data => {
+  document.getElementById('otp').textContent = data.otp;
+  document.getElementById('routeDisplay').textContent = currentSource + ' → ' + currentDest;
+  setStep(2);
+  showSection('otpSection');
+});
+
+// ── OTP VERIFIED ──────────────────────────────────────────────
+socket.on('otp_success', () => {
+  setStep(3);
+  showSection('rideSection');
+});
+
+// ── RIDE COMPLETED ────────────────────────────────────────────
+socket.on('ride_completed', data => {
+  document.getElementById('fareAmount').textContent = '₹' + data.fare;
+  setStep(4);
+  showSection('paymentSection');
+});
+
+// ── PAYMENT ───────────────────────────────────────────────────
+function pay() {
+  const amount = document.getElementById('amount').value;
+  socket.emit('make_payment', { amount });
+}
+
+socket.on('payment_success', () => {
+  document.getElementById('paySuccess').classList.add('visible');
+  document.getElementById('payError').classList.remove('visible');
+  document.getElementById('newRideBtn').style.display = 'flex';
+});
+
+socket.on('payment_failed', (data) => {
+  document.getElementById('payError').classList.add('visible');
+  document.getElementById('paySuccess').classList.remove('visible');
+});
+
+// ── EDGE CASE: DRIVER DISCONNECTED ───────────────────────────
+socket.on('driver_disconnected', () => {
+  alert('⚠️ Your driver disconnected. Please book a new ride.');
+  resetApp();
+});
+
+// ── RESET ─────────────────────────────────────────────────────
+function resetApp() {
+  document.getElementById('source').value = '';
+  document.getElementById('dest').value = '';
+  document.getElementById('amount').value = '';
+  document.getElementById('searchStatus').classList.remove('visible');
+  document.getElementById('paySuccess').classList.remove('visible');
+  document.getElementById('payError').classList.remove('visible');
+  document.getElementById('newRideBtn').style.display = 'none';
+  setStep(1);
+  showSection('bookSection');
+}
+
+// Generate particles
+const container = document.getElementById('particles');
+for (let i = 0; i < 20; i++) {
+  const p = document.createElement('div');
+  p.className = 'particle';
+  p.style.cssText = `
+    left: ${Math.random() * 100}%;
+    animation-duration: ${8 + Math.random() * 12}s;
+    animation-delay: ${Math.random() * 10}s;
+    opacity: ${0.2 + Math.random() * 0.3};
+    width: ${1 + Math.random() * 3}px;
+    height: ${1 + Math.random() * 3}px;
+  `;
+  container.appendChild(p);
+}
+</script>
+</body>
+</html>

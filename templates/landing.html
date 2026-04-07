@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TAXWE — Ride Redefined</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #060810;
+  --surface: #0d1117;
+  --card: #111827;
+  --accent: #f59e0b;
+  --accent2: #ef4444;
+  --text: #f1f5f9;
+  --muted: #64748b;
+  --border: rgba(255,255,255,0.06);
+  --glow: rgba(245,158,11,0.15);
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow-x: hidden;
+  cursor: none;
+}
+
+/* CURSOR */
+.cursor {
+  width: 10px; height: 10px;
+  background: var(--accent);
+  border-radius: 50%;
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  transition: transform 0.1s;
+  mix-blend-mode: screen;
+}
+.cursor-ring {
+  width: 36px; height: 36px;
+  border: 1px solid rgba(245,158,11,0.4);
+  border-radius: 50%;
+  position: fixed;
+  pointer-events: none;
+  z-index: 9998;
+  transition: all 0.15s ease;
+}
+
+/* NOISE OVERLAY */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.5;
+}
+
+/* NAV */
+nav {
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 24px 60px;
+  background: rgba(6,8,16,0.7);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+}
+
+.logo {
+  font-family: 'Syne', sans-serif;
+  font-size: 28px; font-weight: 800;
+  letter-spacing: -1px;
+}
+.logo span { color: var(--accent); }
+
+.nav-links { display: flex; gap: 36px; list-style: none; }
+.nav-links a {
+  font-size: 14px; font-weight: 500;
+  color: var(--muted);
+  text-decoration: none;
+  letter-spacing: 0.5px;
+  transition: color 0.2s;
+}
+.nav-links a:hover { color: var(--text); }
+
+.nav-cta {
+  display: flex; gap: 12px;
+}
+.btn-outline {
+  padding: 10px 22px;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px; font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+.btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+.btn-primary {
+  padding: 10px 22px;
+  border: none;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #000;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px; font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+.btn-primary:hover { background: #fbbf24; transform: translateY(-1px); }
+
+/* HERO */
+.hero {
+  min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+  padding: 120px 60px 80px;
+  overflow: hidden;
+}
+
+.hero-grid {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(245,158,11,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(245,158,11,0.04) 1px, transparent 1px);
+  background-size: 60px 60px;
+  animation: gridDrift 20s linear infinite;
+}
+@keyframes gridDrift {
+  from { transform: translate(0,0); }
+  to { transform: translate(60px,60px); }
+}
+
+.hero-glow {
+  position: absolute;
+  width: 700px; height: 700px;
+  background: radial-gradient(circle, rgba(245,158,11,0.12), transparent 70%);
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  animation: pulse 4s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%,100% { transform: translate(-50%,-50%) scale(1); opacity: 1; }
+  50% { transform: translate(-50%,-50%) scale(1.1); opacity: 0.7; }
+}
+
+.hero-content {
+  position: relative; z-index: 2;
+  max-width: 900px;
+  text-align: center;
+}
+
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(245,158,11,0.1);
+  border: 1px solid rgba(245,158,11,0.2);
+  border-radius: 100px;
+  padding: 6px 16px;
+  font-size: 12px; font-weight: 500;
+  color: var(--accent);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 32px;
+  animation: fadeUp 0.8s ease both;
+}
+.hero-badge::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: blink 1.5s ease-in-out infinite;
+}
+@keyframes blink {
+  0%,100% { opacity: 1; } 50% { opacity: 0.2; }
+}
+
+h1 {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(52px, 8vw, 96px);
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: -3px;
+  margin-bottom: 28px;
+  animation: fadeUp 0.8s 0.1s ease both;
+}
+
+h1 .line2 {
+  display: block;
+  -webkit-text-stroke: 1px rgba(255,255,255,0.3);
+  color: transparent;
+}
+h1 .line3 {
+  display: block;
+  color: var(--accent);
+}
+
+.hero-desc {
+  font-size: 18px;
+  color: var(--muted);
+  line-height: 1.7;
+  max-width: 500px;
+  margin: 0 auto 48px;
+  font-weight: 300;
+  animation: fadeUp 0.8s 0.2s ease both;
+}
+
+.hero-actions {
+  display: flex; gap: 16px; justify-content: center;
+  animation: fadeUp 0.8s 0.3s ease both;
+}
+
+.btn-hero {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 16px 36px;
+  border-radius: 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 16px; font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.btn-hero-primary {
+  background: var(--accent);
+  color: #000;
+  border: none;
+  box-shadow: 0 0 40px rgba(245,158,11,0.3);
+}
+.btn-hero-primary:hover {
+  background: #fbbf24;
+  transform: translateY(-3px);
+  box-shadow: 0 0 60px rgba(245,158,11,0.5);
+}
+.btn-hero-secondary {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-hero-secondary:hover {
+  border-color: rgba(255,255,255,0.3);
+  transform: translateY(-3px);
+}
+
+/* STATS BAR */
+.stats-bar {
+  position: relative; z-index: 2;
+  display: flex; justify-content: center; gap: 80px;
+  padding: 48px 60px;
+  border-top: 1px solid var(--border);
+  animation: fadeUp 0.8s 0.5s ease both;
+}
+.stat { text-align: center; }
+.stat-num {
+  font-family: 'Syne', sans-serif;
+  font-size: 42px; font-weight: 800;
+  color: var(--accent);
+  line-height: 1;
+}
+.stat-label {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 6px;
+  letter-spacing: 0.5px;
+}
+
+/* SECTION */
+section {
+  padding: 120px 60px;
+  position: relative;
+}
+
+.section-label {
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 20px;
+}
+.section-title {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(36px, 5vw, 60px);
+  font-weight: 800;
+  letter-spacing: -2px;
+  line-height: 1.05;
+  margin-bottom: 20px;
+}
+.section-desc {
+  font-size: 16px;
+  color: var(--muted);
+  line-height: 1.8;
+  max-width: 520px;
+  font-weight: 300;
+}
+
+/* HOW IT WORKS */
+.how {
+  background: var(--surface);
+}
+
+.steps-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 2px;
+  margin-top: 80px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.step {
+  background: var(--card);
+  padding: 48px 36px;
+  position: relative;
+  transition: background 0.3s;
+}
+.step:hover { background: #161d2b; }
+
+.step-num {
+  font-family: 'Syne', sans-serif;
+  font-size: 72px; font-weight: 800;
+  color: rgba(255,255,255,0.04);
+  line-height: 1;
+  margin-bottom: 24px;
+}
+.step-icon {
+  font-size: 36px;
+  margin-bottom: 20px;
+}
+.step-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 20px; font-weight: 700;
+  margin-bottom: 12px;
+  letter-spacing: -0.5px;
+}
+.step-desc {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.7;
+  font-weight: 300;
+}
+.step-line {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.4s ease;
+}
+.step:hover .step-line { transform: scaleX(1); }
+
+/* PORTALS */
+.portals {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-top: 80px;
+}
+
+.portal-card {
+  border-radius: 24px;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid var(--border);
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+.portal-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 40px 80px rgba(0,0,0,0.5);
+}
+
+.portal-inner {
+  padding: 56px 48px;
+  height: 100%;
+}
+
+.portal-client {
+  background: linear-gradient(135deg, #0f1923, #162033);
+}
+.portal-driver {
+  background: linear-gradient(135deg, #140f0f, #231416);
+}
+
+.portal-tag {
+  display: inline-block;
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  padding: 6px 14px;
+  border-radius: 100px;
+  margin-bottom: 32px;
+}
+.portal-client .portal-tag {
+  background: rgba(59,130,246,0.15);
+  color: #60a5fa;
+  border: 1px solid rgba(59,130,246,0.2);
+}
+.portal-driver .portal-tag {
+  background: rgba(245,158,11,0.15);
+  color: var(--accent);
+  border: 1px solid rgba(245,158,11,0.2);
+}
+
+.portal-icon {
+  font-size: 64px;
+  margin-bottom: 28px;
+  display: block;
+  filter: drop-shadow(0 0 20px rgba(255,255,255,0.1));
+}
+.portal-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 36px; font-weight: 800;
+  letter-spacing: -1px;
+  margin-bottom: 16px;
+}
+.portal-desc {
+  font-size: 15px;
+  color: var(--muted);
+  line-height: 1.8;
+  font-weight: 300;
+  margin-bottom: 40px;
+}
+
+.portal-features {
+  list-style: none;
+  margin-bottom: 48px;
+}
+.portal-features li {
+  display: flex; align-items: center; gap: 12px;
+  font-size: 14px;
+  color: rgba(255,255,255,0.7);
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-weight: 300;
+}
+.portal-features li::before {
+  content: '→';
+  color: var(--accent);
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.btn-portal {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 14px 32px;
+  border-radius: 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px; font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s;
+  border: none; cursor: pointer;
+}
+.btn-portal-client {
+  background: #3b82f6;
+  color: white;
+}
+.btn-portal-client:hover {
+  background: #60a5fa;
+  transform: translateX(4px);
+  box-shadow: 0 0 30px rgba(59,130,246,0.4);
+}
+.btn-portal-driver {
+  background: var(--accent);
+  color: #000;
+}
+.btn-portal-driver:hover {
+  background: #fbbf24;
+  transform: translateX(4px);
+  box-shadow: 0 0 30px rgba(245,158,11,0.4);
+}
+
+/* FEATURES */
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  margin-top: 80px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  overflow: hidden;
+}
+.feature {
+  background: var(--card);
+  padding: 40px 36px;
+  transition: background 0.3s;
+}
+.feature:hover { background: #131b29; }
+.feature-icon {
+  font-size: 32px;
+  margin-bottom: 20px;
+}
+.feature-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 18px; font-weight: 700;
+  margin-bottom: 12px;
+  letter-spacing: -0.3px;
+}
+.feature-desc {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.7;
+  font-weight: 300;
+}
+
+/* CTA SECTION */
+.cta-section {
+  text-align: center;
+  background: var(--surface);
+  position: relative;
+  overflow: hidden;
+}
+.cta-section::before {
+  content: '';
+  position: absolute;
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(245,158,11,0.08), transparent 70%);
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+}
+.cta-section .section-title { margin: 0 auto 24px; max-width: 600px; }
+.cta-section .section-desc { margin: 0 auto 48px; text-align: center; }
+
+/* FOOTER */
+footer {
+  padding: 48px 60px;
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.footer-logo {
+  font-family: 'Syne', sans-serif;
+  font-size: 22px; font-weight: 800;
+}
+.footer-logo span { color: var(--accent); }
+.footer-copy {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* ANIMATIONS */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.reveal.visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 2px; }
+
+/* FLOATING CAR */
+.hero-car {
+  position: absolute;
+  right: 10%;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 140px;
+  filter: drop-shadow(0 0 60px rgba(245,158,11,0.2));
+  animation: carFloat 3s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+@keyframes carFloat {
+  0%,100% { transform: translateY(-50%) translateX(0); }
+  50% { transform: translateY(-53%) translateX(-10px); }
+}
+
+@media (max-width: 1000px) {
+  nav { padding: 20px 24px; }
+  .nav-links { display: none; }
+  .hero { padding: 100px 24px 60px; }
+  .hero-car { display: none; }
+  .stats-bar { gap: 40px; padding: 40px 24px; flex-wrap: wrap; }
+  section { padding: 80px 24px; }
+  .steps-grid { grid-template-columns: 1fr 1fr; }
+  .portals { grid-template-columns: 1fr; }
+  .features-grid { grid-template-columns: 1fr; }
+  footer { flex-direction: column; gap: 16px; text-align: center; }
+}
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">TAX<span>WE</span></div>
+  <ul class="nav-links">
+    <li><a href="#how">How It Works</a></li>
+    <li><a href="#portals">Portals</a></li>
+    <li><a href="#features">Features</a></li>
+  </ul>
+  <div class="nav-cta">
+    <a href="/driver" target="_blank" class="btn-outline">Driver Login</a>
+    <a href="/client" target="_blank" class="btn-primary">Book a Ride</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+  <div class="hero-car">🚖</div>
+
+  <div class="hero-content">
+    <div class="hero-badge">Real-Time Cab Booking Platform</div>
+    <h1>
+      Your ride,<br>
+      <span class="line2">your way,</span>
+      <span class="line3">right now.</span>
+    </h1>
+    <p class="hero-desc">
+      Connect instantly with drivers nearby. Real-time tracking, OTP verification, and seamless payments — all in one platform.
+    </p>
+    <div class="hero-actions">
+      <a href="/client" target="_blank" class="btn-hero btn-hero-primary">🚕 Book a Ride</a>
+      <a href="/driver" target="_blank" class="btn-hero btn-hero-secondary">🚘 I'm a Driver</a>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats-bar">
+  <div class="stat">
+    <div class="stat-num">12K+</div>
+    <div class="stat-label">Rides Completed</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">4.9★</div>
+    <div class="stat-label">Average Rating</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">340+</div>
+    <div class="stat-label">Active Drivers</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">&lt;2min</div>
+    <div class="stat-label">Avg Pickup Time</div>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<section class="how" id="how">
+  <div class="reveal">
+    <div class="section-label">The Process</div>
+    <div class="section-title">How TAXWE works</div>
+    <p class="section-desc">Four simple steps from booking to destination. No friction, no confusion — just rides.</p>
+  </div>
+
+  <div class="steps-grid reveal">
+    <div class="step">
+      <div class="step-num">01</div>
+      <div class="step-icon">📍</div>
+      <div class="step-title">Enter Your Route</div>
+      <div class="step-desc">Type your pickup and drop-off location. We'll find the closest available driver instantly.</div>
+      <div class="step-line"></div>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <div class="step-icon">✅</div>
+      <div class="step-title">Driver Accepts</div>
+      <div class="step-desc">A nearby driver sees your request and accepts. You'll receive a 4-digit OTP for verification.</div>
+      <div class="step-line"></div>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <div class="step-icon">🔐</div>
+      <div class="step-title">OTP Verification</div>
+      <div class="step-desc">Share your OTP with the driver to start the ride. This ensures you get in the right cab.</div>
+      <div class="step-line"></div>
+    </div>
+    <div class="step">
+      <div class="step-num">04</div>
+      <div class="step-icon">💳</div>
+      <div class="step-title">Pay & Rate</div>
+      <div class="step-desc">Once you arrive, pay the fare directly. Simple, transparent pricing — no hidden charges.</div>
+      <div class="step-line"></div>
+    </div>
+  </div>
+</section>
+
+<!-- PORTALS -->
+<section id="portals" style="background: var(--bg);">
+  <div class="reveal">
+    <div class="section-label">Choose Your Role</div>
+    <div class="section-title">Two portals.<br>One platform.</div>
+    <p class="section-desc">Whether you need a ride or drive one, TAXWE has a dedicated experience built for you.</p>
+  </div>
+
+  <div class="portals reveal">
+    <!-- CLIENT -->
+    <div class="portal-card portal-client">
+      <div class="portal-inner">
+        <span class="portal-tag">Passenger</span>
+        <span class="portal-icon">🧳</span>
+        <div class="portal-title">Book a Ride</div>
+        <p class="portal-desc">Your personal portal to request rides, track your driver in real-time, and pay effortlessly.</p>
+        <ul class="portal-features">
+          <li>Enter source & destination</li>
+          <li>Receive OTP for safe boarding</li>
+          <li>Live ride status updates</li>
+          <li>Pay exact fare, no surprises</li>
+          <li>Book another ride instantly</li>
+        </ul>
+        <a href="/client" target="_blank" class="btn-portal btn-portal-client">Open Client Portal →</a>
+      </div>
+    </div>
+
+    <!-- DRIVER -->
+    <div class="portal-card portal-driver">
+      <div class="portal-inner">
+        <span class="portal-tag">Driver</span>
+        <span class="portal-icon">🚗</span>
+        <div class="portal-title">Start Driving</div>
+        <p class="portal-desc">Your driver cockpit to receive ride requests, verify passengers, and track your earnings.</p>
+        <ul class="portal-features">
+          <li>Real-time ride request alerts</li>
+          <li>View pickup & drop details</li>
+          <li>Verify OTP to start ride</li>
+          <li>Mark ride complete</li>
+          <li>Receive payment instantly</li>
+        </ul>
+        <a href="/driver" target="_blank" class="btn-portal btn-portal-driver">Open Driver Portal →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features" style="background: var(--surface);">
+  <div class="reveal">
+    <div class="section-label">Why TAXWE</div>
+    <div class="section-title">Built different.</div>
+    <p class="section-desc">We obsessed over every detail so your rides feel effortless every single time.</p>
+  </div>
+
+  <div class="features-grid reveal">
+    <div class="feature">
+      <div class="feature-icon">⚡</div>
+      <div class="feature-title">Real-Time Updates</div>
+      <div class="feature-desc">WebSocket-powered live communication. No polling, no delays — every event happens instantly.</div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🔐</div>
+      <div class="feature-title">OTP Security</div>
+      <div class="feature-desc">Every ride starts with a 4-digit OTP verification, ensuring you only board the right cab.</div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">💰</div>
+      <div class="feature-title">Transparent Fares</div>
+      <div class="feature-desc">Dynamic fare calculation with complete transparency. You always know what you'll pay before confirming.</div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🎯</div>
+      <div class="feature-title">Zero Friction</div>
+      <div class="feature-desc">No sign-up, no app install. Open the web, enter your route, and you're ready to ride in seconds.</div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">📡</div>
+      <div class="feature-title">Always Connected</div>
+      <div class="feature-desc">Built on Socket.IO for persistent, bidirectional connections between drivers and passengers.</div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🔁</div>
+      <div class="feature-title">Book Again Instantly</div>
+      <div class="feature-desc">After completing a ride, start another booking in one click. No page reloads required.</div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="reveal">
+    <div class="section-label" style="text-align:center;">Get Started</div>
+    <div class="section-title">Ready to ride?</div>
+    <p class="section-desc">Join thousands of happy passengers and drivers on the TAXWE platform.</p>
+    <div style="display:flex; gap:16px; justify-content:center;">
+      <a href="/client" target="_blank" class="btn-hero btn-hero-primary">🚕 Book Now</a>
+      <a href="/driver" target="_blank" class="btn-hero btn-hero-secondary">🚘 Drive With Us</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">TAX<span>WE</span></div>
+  <div class="footer-copy">© 2026 TAXWE. Real-Time Cab Booking Platform.</div>
+</footer>
+
+<script>
+// Custom cursor
+const cursor = document.getElementById('cursor');
+const ring = document.getElementById('cursorRing');
+let mx = 0, my = 0, rx = 0, ry = 0;
+
+document.addEventListener('mousemove', e => {
+  mx = e.clientX; my = e.clientY;
+  cursor.style.left = mx - 5 + 'px';
+  cursor.style.top = my - 5 + 'px';
+});
+
+function animateRing() {
+  rx += (mx - rx) * 0.12;
+  ry += (my - ry) * 0.12;
+  ring.style.left = rx - 18 + 'px';
+  ring.style.top = ry - 18 + 'px';
+  requestAnimationFrame(animateRing);
+}
+animateRing();
+
+// Scroll reveal
+const reveals = document.querySelectorAll('.reveal');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach((entry, i) => {
+    if (entry.isIntersecting) {
+      setTimeout(() => entry.target.classList.add('visible'), i * 100);
+    }
+  });
+}, { threshold: 0.1 });
+reveals.forEach(el => observer.observe(el));
+
+// Animate stats
+function animateNum(el, target, suffix = '') {
+  let start = 0;
+  const duration = 2000;
+  const step = target / (duration / 16);
+  const timer = setInterval(() => {
+    start += step;
+    if (start >= target) { start = target; clearInterval(timer); }
+    el.textContent = Math.floor(start).toLocaleString() + suffix;
+  }, 16);
+}
+</script>
+</body>
+</html>

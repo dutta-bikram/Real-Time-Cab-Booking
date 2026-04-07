@@ -1,89 +1,596 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>TAXWE Driver</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TAXWE — Driver Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #070507;
+  --surface: #0f0c10;
+  --card: #130f14;
+  --accent: #f59e0b;
+  --success: #22c55e;
+  --danger: #ef4444;
+  --blue: #3b82f6;
+  --text: #f1f5f9;
+  --muted: #6b7280;
+  --border: rgba(255,255,255,0.06);
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+}
+
+.bg-mesh {
+  position: fixed; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse 900px 500px at 10% 40%, rgba(245,158,11,0.05), transparent),
+    radial-gradient(ellipse 600px 600px at 85% 70%, rgba(239,68,68,0.04), transparent);
+}
+.bg-grid {
+  position: fixed; inset: 0; z-index: 0;
+  background-image:
+    linear-gradient(rgba(245,158,11,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(245,158,11,0.025) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
+/* TOPBAR */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 32px;
+  background: rgba(7,5,7,0.9);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+}
+.logo { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; letter-spacing: -1px; }
+.logo span { color: var(--accent); }
+
+.driver-badge {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(245,158,11,0.1);
+  border: 1px solid rgba(245,158,11,0.2);
+  border-radius: 100px;
+  padding: 6px 16px;
+  font-size: 12px; font-weight: 600; color: var(--accent); letter-spacing: 0.5px;
+}
+.driver-badge::before {
+  content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--accent);
+  animation: blink 1.5s ease-in-out infinite;
+}
+@keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.2; } }
+
+.topbar-back { font-size: 13px; color: var(--muted); text-decoration: none; transition: color 0.2s; }
+.topbar-back:hover { color: var(--text); }
+
+/* LAYOUT */
+.layout {
+  position: relative; z-index: 10;
+  display: grid;
+  grid-template-columns: 1fr 420px;
+  gap: 24px;
+  max-width: 1100px;
+  margin: 100px auto 40px;
+  padding: 0 24px;
+  align-items: start;
+}
+
+@media (max-width: 840px) {
+  .layout { grid-template-columns: 1fr; }
+}
+
+/* QUEUE PANEL */
+.queue-panel {
+  background: rgba(13,12,14,0.95);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  overflow: hidden;
+}
+.panel-header {
+  padding: 24px 28px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.panel-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800; letter-spacing: -0.5px; }
+.ride-count-badge {
+  background: rgba(245,158,11,0.15);
+  border: 1px solid rgba(245,158,11,0.25);
+  color: var(--accent);
+  font-size: 12px; font-weight: 700;
+  padding: 4px 12px; border-radius: 100px;
+}
+
+.queue-stripe {
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), #ef4444, var(--accent));
+  background-size: 200% 100%;
+  animation: stripeMove 3s linear infinite;
+}
+@keyframes stripeMove { 0% { background-position: 0%; } 100% { background-position: 200%; } }
+
+.ride-list { padding: 16px; display: flex; flex-direction: column; gap: 12px; min-height: 200px; }
+
+.empty-state { padding: 60px 24px; text-align: center; }
+.radar {
+  width: 120px; height: 120px; border-radius: 50%;
+  border: 1px solid rgba(245,158,11,0.12);
+  display: flex; align-items: center; justify-content: center;
+  position: relative; margin: 0 auto 24px;
+}
+.radar::before, .radar::after {
+  content: ''; position: absolute; border-radius: 50%;
+  border: 1px solid rgba(245,158,11,0.08);
+}
+.radar::before { width: 80px; height: 80px; }
+.radar::after { width: 46px; height: 46px; }
+.radar-spin {
+  position: absolute; inset: 0; border-radius: 50%;
+  background: conic-gradient(rgba(245,158,11,0.25) 0deg, transparent 60deg, transparent 360deg);
+  animation: radarRotate 3s linear infinite;
+}
+@keyframes radarRotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.radar-car { font-size: 28px; position: relative; z-index: 2; animation: carWiggle 2s ease-in-out infinite; }
+@keyframes carWiggle { 0%,100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
+.empty-text { font-size: 15px; font-weight: 500; margin-bottom: 8px; }
+.empty-sub { font-size: 13px; color: var(--muted); font-weight: 300; }
+
+/* RIDE CARD */
+.ride-card {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 18px 20px;
+  transition: all 0.25s;
+  animation: cardIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative; overflow: hidden;
+}
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(-16px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.ride-card::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+  width: 3px; background: var(--accent); border-radius: 3px 0 0 3px;
+  opacity: 0; transition: opacity 0.2s;
+}
+.ride-card:hover { background: rgba(255,255,255,0.04); border-color: rgba(245,158,11,0.2); }
+.ride-card:hover::before { opacity: 1; }
+
+.ride-card-top {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.ride-id { font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); background: rgba(255,255,255,0.04); padding: 3px 8px; border-radius: 4px; }
+.ride-time { font-size: 11px; color: var(--muted); }
+
+.route-mini { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.route-row { display: flex; align-items: center; gap: 10px; }
+.route-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.route-dot.from { background: var(--blue); box-shadow: 0 0 6px rgba(59,130,246,0.5); }
+.route-dot.to { background: var(--danger); box-shadow: 0 0 6px rgba(239,68,68,0.5); }
+.route-label { font-size: 11px; color: var(--muted); width: 36px; flex-shrink: 0; }
+.route-val { font-size: 14px; font-weight: 500; }
+.route-connector-mini { width: 1px; height: 10px; background: rgba(255,255,255,0.1); margin-left: 3px; }
+
+.btn-accept-ride {
+  width: 100%; padding: 11px;
+  border-radius: 10px; border: none;
+  background: var(--accent); color: #000;
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
+  cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.btn-accept-ride:hover { background: #fbbf24; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(245,158,11,0.35); }
+.btn-accept-ride:disabled { opacity: 0.35; cursor: not-allowed; transform: none; box-shadow: none; }
+
+/* RIGHT PANEL */
+.active-panel {
+  background: rgba(13,12,14,0.97);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  overflow: hidden;
+  position: sticky; top: 100px;
+}
+
+.section { display: none; animation: sectionIn 0.4s ease; }
+.section.active { display: block; }
+@keyframes sectionIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+.section-body { padding: 32px 32px 36px; }
+.section-icon { font-size: 48px; display: block; margin-bottom: 14px; }
+.section-title { font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 800; letter-spacing: -0.8px; margin-bottom: 8px; }
+.section-sub { font-size: 14px; color: var(--muted); line-height: 1.7; font-weight: 300; margin-bottom: 24px; }
+
+.active-ride-card {
+  background: rgba(245,158,11,0.06);
+  border: 1px solid rgba(245,158,11,0.15);
+  border-radius: 14px; padding: 18px 20px; margin-bottom: 20px;
+}
+.active-route { display: flex; flex-direction: column; gap: 10px; }
+.active-route-row { display: flex; align-items: center; gap: 12px; }
+.active-route-icon { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
+.active-route-icon.from { background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.25); }
+.active-route-icon.to { background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.25); }
+.active-route-label { font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+.active-route-val { font-size: 14px; font-weight: 500; margin-top: 2px; }
+.active-route-divider { width: 1px; height: 12px; background: rgba(245,158,11,0.2); margin-left: 14px; }
+
+.input-label { font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; display: block; }
+.input-wrap { position: relative; }
+.input-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); font-size: 16px; }
+input[type="text"] {
+  width: 100%; padding: 14px 16px 14px 48px;
+  background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+  border-radius: 12px; color: var(--text);
+  font-family: 'DM Sans', sans-serif; font-size: 15px; outline: none;
+  transition: all 0.3s; letter-spacing: 3px;
+}
+input::placeholder { color: var(--muted); letter-spacing: 0; }
+input:focus { background: rgba(255,255,255,0.07); border-color: rgba(245,158,11,0.4); box-shadow: 0 0 0 3px rgba(245,158,11,0.08); }
+
+.btn {
+  width: 100%; padding: 14px; border-radius: 12px; border: none;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all 0.3s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  margin-top: 14px;
+}
+.btn-verify { background: linear-gradient(135deg, var(--blue), #6366f1); color: white; }
+.btn-verify:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(59,130,246,0.4); }
+.btn-complete { background: var(--success); color: white; }
+.btn-complete:hover { background: #4ade80; transform: translateY(-2px); box-shadow: 0 10px 30px rgba(34,197,94,0.4); }
+.btn-new { background: rgba(255,255,255,0.05); color: var(--text); border: 1px solid var(--border); }
+.btn-new:hover { background: rgba(255,255,255,0.08); transform: translateY(-2px); }
+
+.status-msg {
+  margin-top: 14px; padding: 11px 14px; border-radius: 10px;
+  font-size: 13px; font-weight: 500; display: none; align-items: center; gap: 8px;
+}
+.status-msg.visible { display: flex; }
+.status-msg.success { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.2); color: var(--success); }
+.status-msg.error { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); color: #f87171; }
+.status-msg.info { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.2); color: var(--accent); }
+
+.trip-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 16px 0; }
+.trip-stat { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 10px; padding: 14px; text-align: center; }
+.trip-stat-val { font-size: 13px; font-weight: 600; color: var(--text); }
+.trip-stat-label { font-size: 10px; color: var(--muted); margin-top: 4px; letter-spacing: 0.5px; }
+
+.payment-wait { text-align: center; padding: 28px 0; }
+.payment-icon { font-size: 60px; animation: coinFlip 2.5s ease-in-out infinite; }
+@keyframes coinFlip { 0%,100% { transform: rotateY(0deg); } 50% { transform: rotateY(180deg); } }
+.payment-wait-text { font-size: 17px; font-weight: 600; margin-top: 18px; }
+.payment-wait-sub { font-size: 13px; color: var(--muted); margin-top: 6px; font-weight: 300; }
+.fare-chip {
+  display: inline-block;
+  background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.2);
+  color: var(--accent); font-family: 'Syne', sans-serif;
+  font-size: 28px; font-weight: 800;
+  padding: 12px 28px; border-radius: 12px; margin-top: 16px;
+}
+
+.done-anim { font-size: 72px; animation: doneScale 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
+@keyframes doneScale { from { transform: scale(0); } to { transform: scale(1); } }
+
+.idle-body { padding: 48px 32px; text-align: center; }
+.idle-text { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; margin: 20px 0 8px; }
+.idle-sub { font-size: 14px; color: var(--muted); font-weight: 300; line-height: 1.6; }
+
+.particles { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+.particle { position: absolute; border-radius: 50%; background: var(--accent); opacity: 0; animation: particleFly linear infinite; }
+@keyframes particleFly { 0% { transform: translateY(100vh); opacity: 0; } 10% { opacity: 0.3; } 90% { opacity: 0.1; } 100% { transform: translateY(-100px) translateX(20px); opacity: 0; } }
+</style>
 </head>
 <body>
 
-<div class="card">
+<div class="bg-mesh"></div>
+<div class="bg-grid"></div>
+<div class="particles" id="particles"></div>
 
-    <h2>Driver Panel</h2>
+<div class="topbar">
+  <div class="logo">TAX<span>WE</span></div>
+  <div class="driver-badge">Driver Mode</div>
+  <a href="/" class="topbar-back">← Home</a>
+</div>
 
-    <!-- WAITING -->
-    <div id="waitingSection">
-        <p id="requestText">Waiting for ride request...</p>
+<div class="layout">
+
+  <!-- LEFT: LIVE RIDE QUEUE -->
+  <div class="queue-panel">
+    <div class="queue-stripe"></div>
+    <div class="panel-header">
+      <div class="panel-title">🚦 Live Ride Requests</div>
+      <div class="ride-count-badge" id="rideCount">0 waiting</div>
     </div>
+    <div class="ride-list" id="rideList">
+      <div class="empty-state" id="emptyState">
+        <div class="radar">
+          <div class="radar-spin"></div>
+          <div class="radar-car">🚗</div>
+        </div>
+        <div class="empty-text">Scanning for passengers...</div>
+        <div class="empty-sub">New ride requests will appear here in real-time. You can pick any passenger.</div>
+      </div>
+    </div>
+  </div>
 
-    <!-- REQUEST -->
-    <div id="requestSection" style="display:none;">
-        <p id="rideDetails"></p>
-        <button onclick="acceptRide()">Accept Ride</button>
+  <!-- RIGHT: ACTIVE RIDE PANEL -->
+  <div class="active-panel">
+    <div class="queue-stripe"></div>
+
+    <!-- IDLE -->
+    <div class="section active" id="idleSection">
+      <div class="idle-body">
+        <div style="font-size:56px;">🛞</div>
+        <div class="idle-text">Ready to Roll</div>
+        <div class="idle-sub">Select any ride from the queue on the left. You have full control over which passenger you take.</div>
+      </div>
     </div>
 
     <!-- OTP -->
-    <div id="otpSection" style="display:none;">
-        <input id="otpInput" placeholder="Enter OTP">
-        <button onclick="verifyOTP()">Verify OTP</button>
+    <div class="section" id="otpSection">
+      <div class="section-body">
+        <span class="section-icon">🔐</span>
+        <div class="section-title">Verify Passenger</div>
+        <div class="section-sub">Ask the passenger for their OTP and enter it to start the ride.</div>
+
+        <div class="active-ride-card">
+          <div class="active-route">
+            <div class="active-route-row">
+              <div class="active-route-icon from">📍</div>
+              <div>
+                <div class="active-route-label">Pickup</div>
+                <div class="active-route-val" id="activeFrom">—</div>
+              </div>
+            </div>
+            <div class="active-route-divider"></div>
+            <div class="active-route-row">
+              <div class="active-route-icon to">🏁</div>
+              <div>
+                <div class="active-route-label">Drop-off</div>
+                <div class="active-route-val" id="activeTo">—</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <label class="input-label">Enter Passenger OTP</label>
+        <div class="input-wrap">
+          <span class="input-icon">🔑</span>
+          <input type="text" id="otpInput" placeholder="4-digit OTP" maxlength="4">
+        </div>
+
+        <button class="btn btn-verify" onclick="verifyOTP()">🔓 Verify & Start Ride</button>
+        <div class="status-msg error" id="otpError"><span>❌</span> Wrong OTP. Please try again.</div>
+      </div>
     </div>
 
-    <!-- RIDE -->
-    <div id="rideSection" style="display:none;">
-        <p>Ride Ongoing 🚕</p>
-        <button onclick="completeRide()">Complete Ride</button>
+    <!-- RIDE ONGOING -->
+    <div class="section" id="rideSection">
+      <div class="section-body">
+        <span class="section-icon">🛣️</span>
+        <div class="section-title">Ride in Progress</div>
+        <div class="section-sub">OTP verified. Drive safely to the destination.</div>
+
+        <div class="trip-stats">
+          <div class="trip-stat">
+            <div class="trip-stat-val" id="tripFrom">—</div>
+            <div class="trip-stat-label">Pickup</div>
+          </div>
+          <div class="trip-stat">
+            <div class="trip-stat-val" id="tripTo">—</div>
+            <div class="trip-stat-label">Drop-off</div>
+          </div>
+        </div>
+
+        <div class="status-msg success visible"><span>✅</span> Passenger verified and on board.</div>
+        <button class="btn btn-complete" onclick="completeRide()">🏁 Mark Ride Complete</button>
+      </div>
     </div>
+
+    <!-- WAITING FOR PAYMENT -->
+    <div class="section" id="payWaitSection">
+      <div class="section-body">
+        <div class="payment-wait">
+          <div class="payment-icon">💰</div>
+          <div class="payment-wait-text">Awaiting Payment</div>
+          <div class="payment-wait-sub">Passenger is processing the fare.</div>
+          <div class="fare-chip" id="fareChip">₹—</div>
+        </div>
+        <div class="status-msg info visible" style="justify-content:center;"><span>⏳</span> Waiting for passenger payment...</div>
+      </div>
+    </div>
+
+    <!-- DONE -->
+    <div class="section" id="doneSection">
+      <div class="section-body" style="text-align:center; padding-top:48px;">
+        <div class="done-anim">🎉</div>
+        <div class="section-title" style="text-align:center; margin-top:16px;">Ride Complete!</div>
+        <div class="section-sub" style="text-align:center;">Payment confirmed. Great work!</div>
+        <div class="status-msg success visible" style="justify-content:center;" id="doneMsg"><span>💵</span> Fare received successfully.</div>
+        <button class="btn btn-new" onclick="resetToIdle()">🚗 Ready for Next Ride</button>
+      </div>
+    </div>
+  </div>
 
 </div>
 
 <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
-
 <script>
-var socket = io("http://127.0.0.1:5000");
+var socket = io(window.location.origin);
+var currentRideId = null;
+var currentSource = '';
+var currentDest = '';
+var isOnRide = false;
 
-socket.on("new_request", data => {
-    document.getElementById("waitingSection").style.display = "none";
-    document.getElementById("requestSection").style.display = "block";
-
-    document.getElementById("rideDetails").innerText =
-        "Pickup: " + data.source + " → " + data.dest;
+socket.on('connect', () => {
+  socket.emit('get_pending_rides');
 });
 
-function acceptRide(){
-    socket.emit("accept_ride");
+// ── QUEUE UPDATE ──────────────────────────────────────────────
+socket.on('pending_rides_update', (rides) => {
+  const count = document.getElementById('rideCount');
+  const list = document.getElementById('rideList');
+  const empty = document.getElementById('emptyState');
 
-    document.getElementById("requestSection").style.display = "none";
-    document.getElementById("otpSection").style.display = "block";
+  count.textContent = rides.length + (rides.length === 1 ? ' waiting' : ' waiting');
+  list.querySelectorAll('.ride-card').forEach(c => c.remove());
+
+  if (rides.length === 0) {
+    empty.style.display = 'block';
+  } else {
+    empty.style.display = 'none';
+    rides.forEach(ride => list.appendChild(buildRideCard(ride)));
+  }
+});
+
+function buildRideCard(ride) {
+  const card = document.createElement('div');
+  card.className = 'ride-card';
+  card.id = 'ridecard-' + ride.ride_id;
+  const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  card.innerHTML = `
+    <div class="ride-card-top">
+      <div class="ride-id">#${ride.ride_id}</div>
+      <div class="ride-time">${now}</div>
+    </div>
+    <div class="route-mini">
+      <div class="route-row">
+        <div class="route-dot from"></div>
+        <div class="route-label">From</div>
+        <div class="route-val">${esc(ride.source)}</div>
+      </div>
+      <div class="route-connector-mini"></div>
+      <div class="route-row">
+        <div class="route-dot to"></div>
+        <div class="route-label">To</div>
+        <div class="route-val">${esc(ride.dest)}</div>
+      </div>
+    </div>
+    <button class="btn-accept-ride" id="btn-${ride.ride_id}"
+      onclick="acceptRide('${ride.ride_id}', '${esc(ride.source)}', '${esc(ride.dest)}')"
+      ${isOnRide ? 'disabled' : ''}>
+      ✅ Accept This Ride
+    </button>
+  `;
+  return card;
 }
 
-function verifyOTP(){
-    let otp = document.getElementById("otpInput").value;
-    socket.emit("verify_otp", {otp});
+function esc(str) {
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
-socket.on("otp_success", () => {
-    document.getElementById("otpSection").style.display = "none";
-    document.getElementById("rideSection").style.display = "block";
-});
-
-socket.on("otp_failed", () => {
-    alert("Wrong OTP");
-});
-
-function completeRide(){
-    socket.emit("complete_ride");
-
-    document.getElementById("rideSection").innerHTML = `
-        <h2>Ride Completed ✅</h2>
-        <p>Waiting for payment...</p>
-    `;
+// ── ACCEPT RIDE ───────────────────────────────────────────────
+function acceptRide(rideId, source, dest) {
+  if (isOnRide) { alert('You are already on an active ride.'); return; }
+  isOnRide = true;
+  currentRideId = rideId;
+  currentSource = source;
+  currentDest = dest;
+  socket.emit('accept_ride', { ride_id: rideId });
+  document.querySelectorAll('.btn-accept-ride').forEach(b => b.disabled = true);
 }
 
-socket.on("payment_success", () => {
-    alert("Payment received 💰");
-    location.reload();
+socket.on('ride_accepted_ack', (data) => {
+  currentSource = data.source;
+  currentDest = data.dest;
+  document.getElementById('activeFrom').textContent = data.source;
+  document.getElementById('activeTo').textContent = data.dest;
+  document.getElementById('otpInput').value = '';
+  document.getElementById('otpError').classList.remove('visible');
+  showSection('otpSection');
 });
+
+socket.on('ride_not_available', () => {
+  isOnRide = false;
+  currentRideId = null;
+  alert('⚡ Ride just taken by another driver. Pick another!');
+  document.querySelectorAll('.btn-accept-ride').forEach(b => b.disabled = false);
+});
+
+socket.on('already_on_ride', () => {
+  alert('You are already on an active ride. Complete it first.');
+  isOnRide = true;
+});
+
+// ── VERIFY OTP ────────────────────────────────────────────────
+function verifyOTP() {
+  const otp = document.getElementById('otpInput').value.trim();
+  if (!otp) return;
+  socket.emit('verify_otp', { otp });
+}
+
+socket.on('otp_success', () => {
+  document.getElementById('tripFrom').textContent = currentSource;
+  document.getElementById('tripTo').textContent = currentDest;
+  document.getElementById('otpError').classList.remove('visible');
+  showSection('rideSection');
+});
+
+socket.on('otp_failed', () => {
+  document.getElementById('otpError').classList.add('visible');
+});
+
+// ── COMPLETE RIDE ─────────────────────────────────────────────
+function completeRide() {
+  socket.emit('complete_ride');
+}
+
+socket.on('waiting_for_payment', (data) => {
+  document.getElementById('fareChip').textContent = '₹' + data.fare;
+  showSection('payWaitSection');
+});
+
+// ── PAYMENT DONE ──────────────────────────────────────────────
+socket.on('payment_received', (data) => {
+  document.getElementById('doneMsg').innerHTML = `<span>💵</span> ₹${data.fare} received. Excellent ride!`;
+  showSection('doneSection');
+});
+
+// ── EDGE CASES ────────────────────────────────────────────────
+socket.on('client_disconnected', () => {
+  alert('⚠️ Passenger disconnected. Returning to queue.');
+  resetToIdle();
+});
+
+// ── RESET ─────────────────────────────────────────────────────
+function resetToIdle() {
+  isOnRide = false;
+  currentRideId = null;
+  currentSource = '';
+  currentDest = '';
+  document.getElementById('otpInput').value = '';
+  document.getElementById('otpError').classList.remove('visible');
+  document.querySelectorAll('.btn-accept-ride').forEach(b => b.disabled = false);
+  showSection('idleSection');
+}
+
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ── PARTICLES ─────────────────────────────────────────────────
+const container = document.getElementById('particles');
+for (let i = 0; i < 15; i++) {
+  const p = document.createElement('div');
+  p.className = 'particle';
+  p.style.cssText = `left:${Math.random()*100}%;animation-duration:${10+Math.random()*15}s;animation-delay:${Math.random()*12}s;width:${1+Math.random()*2}px;height:${1+Math.random()*2}px;`;
+  container.appendChild(p);
+}
 </script>
-
 </body>
 </html>
